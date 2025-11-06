@@ -6,12 +6,19 @@ module;
 #include <D3DX9Mesh.h>
 #include <D3DX9Shader.h>
 
+
 export module d3dx9_43;
 
 import common;
+import comvars;
 
 export HMODULE GetD3DX9_43DLL()
 {
+    /*if (isUsingRtxRemix())
+    {
+        return nullptr;
+    }*/
+
     constexpr auto dll = L"d3dx9_43.dll";
     auto hm = GetModuleHandleW(dll);
     return (hm ? hm : LoadLibraryW(dll));

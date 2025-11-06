@@ -87,6 +87,11 @@ public:
     {
         FusionFix::onInitEventAsync() += []()
         {
+             if (isUsingRtxRemix())
+             {
+                 return;
+             }
+
             CIniReader iniReader("");
 
             // [NIGHTSHADOWS]

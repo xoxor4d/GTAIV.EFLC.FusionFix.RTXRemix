@@ -450,7 +450,24 @@ public:
 
         CIniReader d3d9cfg(d3d9cfgPath);
         auto api = d3d9cfg.ReadInteger("MAIN", "API", 0);
-        FusionFixSettings.Set("PREF_GRAPHICSAPI", api);
+
+        if (!isUsingRtxRemix())
+        {
+            FusionFixSettings.Set("PREF_GRAPHICSAPI", api);
+        }
+        else
+        {
+            FusionFixSettings.Set("PREF_GRAPHICSAPI", 0);
+            FusionFixSettings.Set("PREF_TREE_LIGHTING", 0);
+            FusionFixSettings.Set("PREF_DEFINITION", 0);
+            FusionFixSettings.Set("PREF_MOTIONBLUR", 0);
+            FusionFixSettings.Set("PREF_TREEALPHA", 0);
+            FusionFixSettings.Set("PREF_SUNSHAFTS", 0);
+            FusionFixSettings.Set("PREF_ANTIALIASING", 0);
+            FusionFixSettings.Set("PREF_VOLUMETRICFOG", 0);
+            FusionFixSettings.Set("PREF_DISTANTLIGHTS", 0);
+            FusionFixSettings.Set("PREF_EXTRANIGHTSHADOWS", 0);
+        }
     }
 public:
     int32_t Get(int32_t prefID)
@@ -696,21 +713,67 @@ public:
                     // custom handler for graphics api switch
                     if (FusionFixSettings.isSame(id, "PREF_GRAPHICSAPI"))
                     {
-                        auto vulkan = LoadLibraryExW(L"vulkan.dll", NULL, LOAD_LIBRARY_AS_DATAFILE);
-                        auto FusionFixGraphicsApiSwitch = GetProcAddress(GetModuleHandleW(L"d3d9.dll"), "FusionFixGraphicsApiSwitch");
-
-                        if (vulkan == NULL || !FusionFixGraphicsApiSwitch)
+                        if (isUsingRtxRemix())
                         {
-                            if (GetModuleHandleW(L"winevulkan.dll") || GetModuleHandleW(L"vulkan-1.dll"))
-                                FusionFixSettings.Set(id, 1);
-                            else
-                                FusionFixSettings.Set(id, 0);
+                            FusionFixSettings.Set(id, 0);
                         }
                         else
                         {
-                            FreeLibrary(vulkan);
-                            CIniReader d3d9cfg(CSettings::d3d9cfgPath);
-                            d3d9cfg.WriteInteger("MAIN", "API", value, true);
+                            auto vulkan = LoadLibraryExW(L"vulkan.dll", NULL, LOAD_LIBRARY_AS_DATAFILE);
+                            auto FusionFixGraphicsApiSwitch = GetProcAddress(GetModuleHandleW(L"d3d9.dll"), "FusionFixGraphicsApiSwitch");
+
+                            if (vulkan == NULL || !FusionFixGraphicsApiSwitch)
+                            {
+                                if (GetModuleHandleW(L"winevulkan.dll") || GetModuleHandleW(L"vulkan-1.dll"))
+                                    FusionFixSettings.Set(id, 1);
+                                else
+                                    FusionFixSettings.Set(id, 0);
+                            }
+                            else
+                            {
+                                FreeLibrary(vulkan);
+                                CIniReader d3d9cfg(CSettings::d3d9cfgPath);
+                                d3d9cfg.WriteInteger("MAIN", "API", value, true);
+                            }
+                        }
+                    }
+
+                    if (isUsingRtxRemix())
+                    {
+                        if (FusionFixSettings.isSame(id, "PREF_TREE_LIGHTING")) {
+                            FusionFixSettings.Set(id, 0);
+                        }
+
+                        if (FusionFixSettings.isSame(id, "PREF_DEFINITION")) {
+                            FusionFixSettings.Set(id, 0);
+                        }
+
+                        if (FusionFixSettings.isSame(id, "PREF_MOTIONBLUR")) {
+                            FusionFixSettings.Set(id, 0);
+                        }
+
+                        if (FusionFixSettings.isSame(id, "PREF_TREEALPHA")) {
+                            FusionFixSettings.Set(id, 0);
+                        }
+
+                        if (FusionFixSettings.isSame(id, "PREF_SUNSHAFTS")) {
+                            FusionFixSettings.Set(id, 0);
+                        }
+
+                        if (FusionFixSettings.isSame(id, "PREF_ANTIALIASING")) {
+                            FusionFixSettings.Set(id, 0);
+                        }
+
+                        if (FusionFixSettings.isSame(id, "PREF_VOLUMETRICFOG")) {
+                            FusionFixSettings.Set(id, 0);
+                        }
+
+                        if (FusionFixSettings.isSame(id, "PREF_DISTANTLIGHTS")) {
+                            FusionFixSettings.Set(id, 0);
+                        }
+
+                        if (FusionFixSettings.isSame(id, "PREF_EXTRANIGHTSHADOWS")) {
+                            FusionFixSettings.Set(id, 0);
                         }
                     }
                 }
@@ -1107,12 +1170,17 @@ public:
             static bool bExtendedTimecycEditing = iniReader.ReadInteger("FOG", "ExtendedTimecycEditing", 0) != 0;
 
             static ID3DXFont* pFPSFont = nullptr;
-
+            static ID3DXFont* pTcFont = nullptr;
+            
             FusionFix::onBeforeReset() += []()
             {
                 if (pFPSFont)
                     pFPSFont->Release();
                 pFPSFont = nullptr;
+
+                if (pTcFont)
+                    pTcFont->Release();
+                pTcFont = nullptr;
             };
 
             FusionFix::onEndScene() += []()
@@ -1122,6 +1190,7 @@ public:
                 {
                     static std::list<int> m_times;
                     static int fontSize = 0;
+                    static int fontTcSize = 0;
 
                     auto pDevice = *RageDirect3DDevice9::m_pRealDevice;
 
@@ -1137,9 +1206,11 @@ public:
                     uint32_t fps = 0;
                     if (m_times.size() >= 2)
                         fps = static_cast<uint32_t>(0.5f + (static_cast<double>(m_times.size() - 1) * static_cast<double>(frequency.QuadPart)) / static_cast<double>(m_times.back() - m_times.front()));
-
+            
+                    bool font_valid = true;
                     if (!pFPSFont)
                     {
+                        font_valid = false;
                         D3DDEVICE_CREATION_PARAMETERS cparams;
                         RECT rect;
                         pDevice->GetCreationParameters(&cparams);
@@ -1164,7 +1235,36 @@ public:
                         if (D3DXCreateFontIndirectW(pDevice, &fps_font, &pFPSFont) != D3D_OK)
                             return;
                     }
-                    else
+
+                    if (!pTcFont)
+                    {
+                        font_valid = false;
+                        D3DDEVICE_CREATION_PARAMETERS cparams;
+                        RECT rect;
+                        pDevice->GetCreationParameters(&cparams);
+                        GetClientRect(cparams.hFocusWindow, &rect);
+
+                        fontTcSize = rect.bottom / 40;
+
+                        D3DXFONT_DESC font;
+                        ZeroMemory(&font, sizeof(D3DXFONT_DESC));
+                        font.Height = fontTcSize;
+                        font.Width = 0;
+                        font.Weight = 400;
+                        font.MipLevels = 0;
+                        font.Italic = 0;
+                        font.CharSet = DEFAULT_CHARSET;
+                        font.OutputPrecision = OUT_DEFAULT_PRECIS;
+                        font.Quality = ANTIALIASED_QUALITY;
+                        font.PitchAndFamily = DEFAULT_PITCH | FF_DONTCARE;
+                        wchar_t FaceName[] = L"Arial";
+                        memcpy(&font.FaceName, &FaceName, sizeof(FaceName));
+
+                        if (D3DXCreateFontIndirectW(pDevice, &font, &pTcFont) != D3D_OK)
+                            return;
+                    }
+
+                    if (font_valid)
                     {
                         auto DrawTextOutline = [](ID3DXFont* pFont, FLOAT X, FLOAT Y, D3DXCOLOR dColor, CONST PCHAR cString, ...)
                         {
@@ -1205,20 +1305,20 @@ public:
                         {
                             auto i = 0;
 
-                            static char sVolFogDensity[] = "VolFogDensity: %f";
-                            DrawTextOutline(pFPSFont, 10, FLOAT(fontSize * ++i), (curEp == 2) ? TBOGT : ((curEp == 1) ? TLAD : IV), sVolFogDensity, CTimeCycleExt::GetVolFogDensity());
+                            /*static char sVolFogDensity[] = "VolFogDensity: %f";
+                            DrawTextOutline(pTcFont, 10, FLOAT(fontTcSize * ++i + fontSize), (curEp == 2) ? TBOGT : ((curEp == 1) ? TLAD : IV), sVolFogDensity, CTimeCycleExt::GetVolFogDensity());
 
                             static char sVolFogHeightFalloff[] = "VolFogHeightFalloff: %f";
-                            DrawTextOutline(pFPSFont, 10, FLOAT(fontSize * ++i), (curEp == 2) ? TBOGT : ((curEp == 1) ? TLAD : IV), sVolFogHeightFalloff, CTimeCycleExt::GetVolFogHeightFalloff());
+                            DrawTextOutline(pTcFont, 10, FLOAT(fontTcSize * ++i + fontSize), (curEp == 2) ? TBOGT : ((curEp == 1) ? TLAD : IV), sVolFogHeightFalloff, CTimeCycleExt::GetVolFogHeightFalloff());
 
                             static char sVolFogAltitudeTweak[] = "VolFogAltitudeTweak: %f";
-                            DrawTextOutline(pFPSFont, 10, FLOAT(fontSize * ++i), (curEp == 2) ? TBOGT : ((curEp == 1) ? TLAD : IV), sVolFogAltitudeTweak, CTimeCycleExt::GetVolFogAltitudeTweak());
+                            DrawTextOutline(pTcFont, 10, FLOAT(fontTcSize * ++i + fontSize), (curEp == 2) ? TBOGT : ((curEp == 1) ? TLAD : IV), sVolFogAltitudeTweak, CTimeCycleExt::GetVolFogAltitudeTweak());
 
                             static char sVolFogPower[] = "VolFogPower: %f";
-                            DrawTextOutline(pFPSFont, 10, FLOAT(fontSize * ++i), (curEp == 2) ? TBOGT : ((curEp == 1) ? TLAD : IV), sVolFogPower, CTimeCycleExt::GetVolFogPower());
+                            DrawTextOutline(pTcFont, 10, FLOAT(fontTcSize * ++i + fontSize), (curEp == 2) ? TBOGT : ((curEp == 1) ? TLAD : IV), sVolFogPower, CTimeCycleExt::GetVolFogPower());
 
                             static char sSSIntensity[] = "SSIntensity: %f";
-                            DrawTextOutline(pFPSFont, 10, FLOAT(fontSize * ++i), (curEp == 2) ? TBOGT : ((curEp == 1) ? TLAD : IV), sSSIntensity, CTimeCycleExt::GetSSIntensity());
+                            DrawTextOutline(pTcFont, 10, FLOAT(fontTcSize * ++i + fontSize), (curEp == 2) ? TBOGT : ((curEp == 1) ? TLAD : IV), sSSIntensity, CTimeCycleExt::GetSSIntensity());*/
 
                             static std::string_view modNames[] = {
                                 "noambient", "NoAmbientmult", "qwnomoon", "qw2nomoon", "Brook_S2_TC", "MH_NOMOON", "KsS1nomoon1", "KsS1nomoon2", "KsS1nomoon3", "Brook_N_gden", "Buildsite_MH1",
@@ -1245,7 +1345,7 @@ public:
                             for (const auto& it : currentTimecycleModifiers)
                             {
                                 if (it.first >= 0 && it.first < CTimeCycleModifier::ARRAY_SIZE)
-                                    DrawTextOutline(pFPSFont, 10, FLOAT(fontSize * ++i), (curEp == 2) ? TBOGT : ((curEp == 1) ? TLAD : IV), sModifiers, modNames[it.first].data(), it.second);
+                                    DrawTextOutline(pTcFont, 10, FLOAT(fontTcSize * ++i + fontSize), (curEp == 2) ? TBOGT : ((curEp == 1) ? TLAD : IV), sModifiers, modNames[it.first].data(), it.second);
                             }
                         }
                     }
@@ -1272,6 +1372,10 @@ public:
                 if (pFPSFont)
                     pFPSFont->Release();
                 pFPSFont = nullptr;
+
+                if (pTcFont)
+                    pTcFont->Release();
+                pTcFont = nullptr;
             };
 
             FusionFix::onInitEventAsync() += []()

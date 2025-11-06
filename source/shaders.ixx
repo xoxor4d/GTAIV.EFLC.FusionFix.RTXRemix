@@ -168,6 +168,11 @@ public:
 
         FusionFix::onInitEvent() += []()
         {
+            if (isUsingRtxRemix())
+            {
+                return;
+            }
+
             CIniReader iniReader("");
             fOverrideTreeAlpha = std::clamp(iniReader.ReadFloat("MISC", "OverrideTreeAlpha", 0.0f), 0.0f, 255.0f);
             fSHADOWFILTERSHARPShadowSoftness = iniReader.ReadFloat("SHADOWFILTERSHARP", "ShadowSoftness", 1.5f);
@@ -191,54 +196,57 @@ public:
             bNoBloomColorShift = iniReader.ReadInteger("MISC", "NoBloomColorShift", 1) != 0;
             fMaxPQValue = std::max(iniReader.ReadFloat("MISC", "MaxPQValue", 100.0f), 0.0000001f);
 
-            // Redirect path to one unified folder
-            auto pattern = hook::pattern("8B 04 8D ? ? ? ? A3 ? ? ? ? 8B 44 24 04");
-            if (!pattern.empty())
+            if (!isUsingRtxRemix())
             {
-                static auto off_1045520 = *pattern.get_first<const char**>(3);
-                struct ShaderPathHook
+                // Redirect path to one unified folder
+                auto pattern = hook::pattern("8B 04 8D ? ? ? ? A3 ? ? ? ? 8B 44 24 04");
+                if (!pattern.empty())
                 {
-                    void operator()(injector::reg_pack& regs)
+                    static auto off_1045520 = *pattern.get_first<const char**>(3);
+                    struct ShaderPathHook
                     {
-                        regs.ecx = 0;
-                        *(const char**)&regs.eax = *off_1045520;
-                    }
-                }; injector::MakeInline<ShaderPathHook>(pattern.get_first(0), pattern.get_first(7));
-            }
-            else
-            {
-                pattern = hook::pattern("8B 14 85 ? ? ? ? A3 ? ? ? ? 8B 44 24 04");
-                static auto off_1045520 = *pattern.get_first<const char**>(3);
-                struct ShaderPathHook
-                {
-                    void operator()(injector::reg_pack& regs)
-                    {
-                        regs.eax = 0;
-                        *(const char**)&regs.edx = *off_1045520;
-                    }
-                }; injector::MakeInline<ShaderPathHook>(pattern.get_first(0), pattern.get_first(7));
-            }
-
-            // Redirect common\shaders\win32_30\rage_perlinnoise.fxc
-            {
-                std::ifstream is(GetModulePath(GetModuleHandleW(NULL)).parent_path() / "common" / "shaders" / "win32_30" / "rage_perlinnoise.fxc", std::ios::binary);
-                if (is)
-                {
-                    static std::string rage_perlinnoise((std::istreambuf_iterator<char>(is)), std::istreambuf_iterator<char>());
-
-                    auto pattern = hook::pattern("A1 ? ? ? ? A3 ? ? ? ? C7 05 ? ? ? ? ? ? ? ? C3");
-                    for (size_t i = 0; i < pattern.size(); ++i)
-                    {
-                        auto off_110ECB0 = *pattern.get(i).get<void***>(16);
-                        if (!IsBadReadPtr(off_110ECB0, sizeof(uint32_t)))
+                        void operator()(injector::reg_pack& regs)
                         {
-                            if (!IsBadReadPtr(off_110ECB0[0], strlen("win32_30/rage_perlinnoise.fxc")))
+                            regs.ecx = 0;
+                            *(const char**)&regs.eax = *off_1045520;
+                        }
+                    }; injector::MakeInline<ShaderPathHook>(pattern.get_first(0), pattern.get_first(7));
+                }
+                else
+                {
+                    pattern = hook::pattern("8B 14 85 ? ? ? ? A3 ? ? ? ? 8B 44 24 04");
+                    static auto off_1045520 = *pattern.get_first<const char**>(3);
+                    struct ShaderPathHook
+                    {
+                        void operator()(injector::reg_pack& regs)
+                        {
+                            regs.eax = 0;
+                            *(const char**)&regs.edx = *off_1045520;
+                        }
+                    }; injector::MakeInline<ShaderPathHook>(pattern.get_first(0), pattern.get_first(7));
+                }
+
+                // Redirect common\shaders\win32_30\rage_perlinnoise.fxc
+                {
+                    std::ifstream is(GetModulePath(GetModuleHandleW(NULL)).parent_path() / "common" / "shaders" / "win32_30" / "rage_perlinnoise.fxc", std::ios::binary);
+                    if (is)
+                    {
+                        static std::string rage_perlinnoise((std::istreambuf_iterator<char>(is)), std::istreambuf_iterator<char>());
+
+                        auto pattern = hook::pattern("A1 ? ? ? ? A3 ? ? ? ? C7 05 ? ? ? ? ? ? ? ? C3");
+                        for (size_t i = 0; i < pattern.size(); ++i)
+                        {
+                            auto off_110ECB0 = *pattern.get(i).get<void***>(16);
+                            if (!IsBadReadPtr(off_110ECB0, sizeof(uint32_t)))
                             {
-                                auto str = std::string_view((const char*)off_110ECB0[0]);
-                                if (str == "win32_30/rage_perlinnoise.fxc")
+                                if (!IsBadReadPtr(off_110ECB0[0], strlen("win32_30/rage_perlinnoise.fxc")))
                                 {
-                                    injector::WriteMemory(&off_110ECB0[1], rage_perlinnoise.data(), true);
-                                    break;
+                                    auto str = std::string_view((const char*)off_110ECB0[0]);
+                                    if (str == "win32_30/rage_perlinnoise.fxc")
+                                    {
+                                        injector::WriteMemory(&off_110ECB0[1], rage_perlinnoise.data(), true);
+                                        break;
+                                    }
                                 }
                             }
                         }
@@ -369,6 +377,11 @@ public:
             static auto BeginSceneHook = safetyhook::create_mid(pattern.get_first(), [](SafetyHookContext& regs)
             {
                 auto pDevice = rage::grcDevice::GetD3DDevice();
+
+                if (isUsingRtxRemix())
+                {
+                    return;
+                }
 
                 // Setup variables for shaders
                 static auto dw11A2948 = *find_pattern("C7 05 ? ? ? ? ? ? ? ? 0F 85 ? ? ? ? 6A 00", "D8 05 ? ? ? ? D9 1D ? ? ? ? 83 05").get_first<float*>(2);
@@ -665,6 +678,11 @@ public:
             {
                 pHDRTexQuarter = nullptr;
             };
+
+            if (isUsingRtxRemix())
+            {
+                return;
+            }
 
             if (GetD3DX9_43DLL())
             {

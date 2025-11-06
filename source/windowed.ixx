@@ -209,3 +209,17 @@ public:
         };
     }
 } Windowed;
+
+extern "C"
+{
+    void __declspec(dllexport) SetRect_Remix(RECT rect)
+    {
+        gRect = rect;
+    }
+
+    void __declspec(dllexport) CreateWindowExA_Remix(HWND hwnd)
+    {
+        gWnd = hwnd;
+        SwitchWindowStyle();
+    }
+}

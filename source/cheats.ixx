@@ -57,8 +57,8 @@ auto HallCheat(bool bPrintHelp = true) -> void
 
 std::vector<std::pair<const char*, std::function<void()>>> ReversedCheats =
 {
-    { "wonstitel", []() { SnowCheat(); }}, // letitsnow
-    { "ecafyracs", []() { HallCheat(); }}, // scaryface
+    //{ "wonstitel", []() { SnowCheat(); }}, // letitsnow
+    //{ "ecafyracs", []() { HallCheat(); }}, // scaryface
 };
 
 char VirtualKeyToChar(int vkCode)
