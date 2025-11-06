@@ -2207,6 +2207,28 @@ export namespace UAL
     bool (WINAPI* AddVirtualFileForOverloadW)(const wchar_t* virtualPath, const uint8_t* data, size_t size, int priority) = nullptr;
 }
 
+export enum RtxRemixState
+{
+    RTX_UNKNOWN = 0,
+    RTX_NOT_PRESENT = 1,
+    RTX_PRESENT = 2
+};
+export RtxRemixState rtxRemixState = RTX_UNKNOWN;
+
+export bool isUsingRtxRemix()
+{
+    if (rtxRemixState == RTX_UNKNOWN)
+    {
+        rtxRemixState = GetModuleHandleA("a_gta4-rtx.asi") != nullptr ? RTX_PRESENT : RTX_NOT_PRESENT;
+        if (isUsingRtxRemix())
+        {
+            printf("\n[FusionFix] Detected RTX Remix Compatibility Mod.\n\n");
+        }
+    }
+
+    return rtxRemixState == RTX_PRESENT;
+}
+
 class Common
 {
 public:

@@ -130,13 +130,35 @@ public:
                         {
                             POINT pt;
                             RECT rec;
-                            GetClientRect(gWnd, &rec);
-                            if (gWnd == GetFocus())
-                                ClipCursor(&rec);
-                            GetCursorPos(&pt);
 
-                            *dword_18B7A80 = pt.x;
-                            *dword_18B7A8C = pt.y;
+                            if (!isUsingRtxRemix())
+                            {
+                                GetClientRect(gWnd, &rec);
+                                if (gWnd == GetFocus())
+                                    ClipCursor(&rec);
+
+                                GetCursorPos(&pt);
+
+                                *dword_18B7A80 = pt.x;
+                                *dword_18B7A8C = pt.y;
+                            }
+                            else
+                            {
+                                // Remix comp mod detours CreateWindowExA and provides gWnd via extern fn 'CreateWindowExA_Remix'
+                                if (gWnd)
+                                {
+                                    GetCursorPos(&pt);
+
+                                    // Window is not always in the top left corner
+                                    ScreenToClient(gWnd, &pt);
+                                    *dword_18B7A80 = pt.x;
+                                    *dword_18B7A8C = pt.y;
+                                }
+                                else
+                                {
+                                    *dword_18B7A8C = regs.eax;
+                                }
+                            }
                         }
                         else
                         {
@@ -160,13 +182,35 @@ public:
                         {
                             POINT pt;
                             RECT rec;
-                            GetWindowRect(gWnd, &rec);
-                            if (gWnd == GetFocus())
-                                ClipCursor(&rec);
-                            GetCursorPos(&pt);
 
-                            *dword_18B7A80 = pt.x;
-                            *dword_18B7A8C = pt.y;
+                            if (!isUsingRtxRemix())
+                            {
+                                GetClientRect(gWnd, &rec);
+                                if (gWnd == GetFocus())
+                                    ClipCursor(&rec);
+
+                                GetCursorPos(&pt);
+
+                                *dword_18B7A80 = pt.x;
+                                *dword_18B7A8C = pt.y;
+                            }
+                            else
+                            {
+                                // Remix comp mod detours CreateWindowExA and provides gWnd via extern fn 'CreateWindowExA_Remix'
+                                if (gWnd)
+                                {
+                                    GetCursorPos(&pt);
+
+                                    // Window is not always in the top left corner
+                                    ScreenToClient(gWnd, &pt);
+                                    *dword_18B7A80 = pt.x;
+                                    *dword_18B7A8C = pt.y;
+                                }
+                                else
+                                {
+                                    *dword_18B7A8C = regs.eax;
+                                }
+                            }
                         }
                         else
                         {

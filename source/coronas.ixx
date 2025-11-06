@@ -5,6 +5,7 @@ module;
 export module coronas;
 
 import common;
+import comvars;
 
 static constexpr auto NewLimitExponent = 14;
 
@@ -220,6 +221,11 @@ public:
     {
         FusionFix::onInitEventAsync() += []()
         {
+            if (isUsingRtxRemix())
+            {
+                return;
+            }
+
             auto pattern = hook::pattern("81 FE ? ? ? ? 0F 8D ? ? ? ? 8B 44 24 08 8B 4C 24 1C F3 0F 10 44 24 ? C1 E2 06");
             if (!pattern.empty())
             {

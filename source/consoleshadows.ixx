@@ -62,6 +62,11 @@ public:
     {
         FusionFix::onInitEventAsync() += []()
         {
+             if (isUsingRtxRemix())
+             {
+                 return;
+             }
+
             // Vehicle night shadows
             // Allows rendering dynamic shadows of vehicles from artificial light sources
             // Bugs: Vehicle tires and damage/dents/deformation do not get included in the shadow maps
