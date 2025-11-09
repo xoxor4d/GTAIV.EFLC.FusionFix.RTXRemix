@@ -438,7 +438,24 @@ public:
 
         CIniReader d3d9cfg(d3d9cfgPath);
         auto api = d3d9cfg.ReadInteger("MAIN", "API", 0);
-        FusionFixSettings.Set("PREF_GRAPHICSAPI", api);
+
+        if (!isUsingRtxRemix())
+        {
+            FusionFixSettings.Set("PREF_GRAPHICSAPI", api);
+        }
+        else
+        {
+            FusionFixSettings.Set("PREF_GRAPHICSAPI", 0);
+            FusionFixSettings.Set("PREF_TREE_LIGHTING", 0);
+            FusionFixSettings.Set("PREF_DEFINITION", 0);
+            FusionFixSettings.Set("PREF_MOTIONBLUR", 0);
+            FusionFixSettings.Set("PREF_TREEALPHA", 0);
+            FusionFixSettings.Set("PREF_SUNSHAFTS", 0);
+            FusionFixSettings.Set("PREF_ANTIALIASING", 0);
+            FusionFixSettings.Set("PREF_VOLUMETRICFOG", 0);
+            FusionFixSettings.Set("PREF_DISTANTLIGHTS", 0);
+            FusionFixSettings.Set("PREF_EXTRANIGHTSHADOWS", 0);
+        }
     }
 public:
     int32_t Get(int32_t prefID)
@@ -648,21 +665,67 @@ public:
                     // custom handler for graphics api switch
                     if (FusionFixSettings.isSame(id, "PREF_GRAPHICSAPI"))
                     {
-                        auto vulkan = LoadLibraryExW(L"vulkan.dll", NULL, LOAD_LIBRARY_AS_DATAFILE);
-                        auto FusionFixGraphicsApiSwitch = GetProcAddress(GetModuleHandleW(L"d3d9.dll"), "FusionFixGraphicsApiSwitch");
-
-                        if (vulkan == NULL || !FusionFixGraphicsApiSwitch)
+                        if (isUsingRtxRemix())
                         {
-                            if (GetModuleHandleW(L"winevulkan.dll") || GetModuleHandleW(L"vulkan-1.dll"))
-                                FusionFixSettings.Set(id, 1);
-                            else
-                                FusionFixSettings.Set(id, 0);
+                            FusionFixSettings.Set(id, 0);
                         }
                         else
                         {
-                            FreeLibrary(vulkan);
-                            CIniReader d3d9cfg(CSettings::d3d9cfgPath);
-                            d3d9cfg.WriteInteger("MAIN", "API", value, true);
+                            auto vulkan = LoadLibraryExW(L"vulkan.dll", NULL, LOAD_LIBRARY_AS_DATAFILE);
+                            auto FusionFixGraphicsApiSwitch = GetProcAddress(GetModuleHandleW(L"d3d9.dll"), "FusionFixGraphicsApiSwitch");
+
+                            if (vulkan == NULL || !FusionFixGraphicsApiSwitch)
+                            {
+                                if (GetModuleHandleW(L"winevulkan.dll") || GetModuleHandleW(L"vulkan-1.dll"))
+                                    FusionFixSettings.Set(id, 1);
+                                else
+                                    FusionFixSettings.Set(id, 0);
+                            }
+                            else
+                            {
+                                FreeLibrary(vulkan);
+                                CIniReader d3d9cfg(CSettings::d3d9cfgPath);
+                                d3d9cfg.WriteInteger("MAIN", "API", value, true);
+                            }
+                        }
+                    }
+
+                    if (isUsingRtxRemix())
+                    {
+                        if (FusionFixSettings.isSame(id, "PREF_TREE_LIGHTING")) {
+                            FusionFixSettings.Set(id, 0);
+                        }
+
+                        if (FusionFixSettings.isSame(id, "PREF_DEFINITION")) {
+                            FusionFixSettings.Set(id, 0);
+                        }
+
+                        if (FusionFixSettings.isSame(id, "PREF_MOTIONBLUR")) {
+                            FusionFixSettings.Set(id, 0);
+                        }
+
+                        if (FusionFixSettings.isSame(id, "PREF_TREEALPHA")) {
+                            FusionFixSettings.Set(id, 0);
+                        }
+
+                        if (FusionFixSettings.isSame(id, "PREF_SUNSHAFTS")) {
+                            FusionFixSettings.Set(id, 0);
+                        }
+
+                        if (FusionFixSettings.isSame(id, "PREF_ANTIALIASING")) {
+                            FusionFixSettings.Set(id, 0);
+                        }
+
+                        if (FusionFixSettings.isSame(id, "PREF_VOLUMETRICFOG")) {
+                            FusionFixSettings.Set(id, 0);
+                        }
+
+                        if (FusionFixSettings.isSame(id, "PREF_DISTANTLIGHTS")) {
+                            FusionFixSettings.Set(id, 0);
+                        }
+
+                        if (FusionFixSettings.isSame(id, "PREF_EXTRANIGHTSHADOWS")) {
+                            FusionFixSettings.Set(id, 0);
                         }
                     }
                 }
