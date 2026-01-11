@@ -14,10 +14,10 @@ import comvars;
 
 export HMODULE GetD3DX9_43DLL()
 {
-    if (isUsingRtxRemix())
+    /*if (isUsingRtxRemix())
     {
         return nullptr;
-    }
+    }*/
 
     constexpr auto dll = L"d3dx9_43.dll";
     auto hm = GetModuleHandleW(dll);

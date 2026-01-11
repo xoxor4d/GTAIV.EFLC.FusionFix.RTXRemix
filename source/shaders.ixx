@@ -678,6 +678,11 @@ public:
                 pHDRTexQuarter = nullptr;
             };
 
+            if (isUsingRtxRemix())
+            {
+                return;
+            }
+
             if (GetD3DX9_43DLL())
             {
                 CRenderPhaseDeferredLighting_LightsToScreen::OnBuildRenderList() += []()
