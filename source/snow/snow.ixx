@@ -846,6 +846,11 @@ public:
     {
         FusionFix::onInitEventAsync() += []()
         {
+            if (isUsingRtxRemix())
+            {
+                return;
+            }
+
             if (GetD3DX9_43DLL())
             {
                 auto now = std::chrono::system_clock::now();
