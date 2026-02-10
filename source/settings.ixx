@@ -1329,6 +1329,10 @@ public:
                 if (pFPSFont)
                     pFPSFont->Release();
                 pFPSFont = nullptr;
+
+                if (pTcFont)
+                    pTcFont->Release();
+                pTcFont = nullptr;
             };
 
             FusionFix::onInitEventAsync() += []()
