@@ -22,6 +22,11 @@ public:
 
     auto Init() -> void override
     {
+        if (isUsingRtxRemix())
+        {
+            return;
+        }
+
         CRenderPhaseDeferredLighting_LightsToScreen::OnBuildRenderList() += OnBuildRenderList;
 
         // Disables rain-related audio (e.g. Surface impacts)
