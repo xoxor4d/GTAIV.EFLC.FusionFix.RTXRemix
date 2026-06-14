@@ -155,7 +155,7 @@
         </menu>
 
         <menu enum="MENU_DISPLAY_NETSTATS_COMP_TEAM">
-            <options text="DirectX 9" action="ACTION_NONE" value="0" />
+            <options text="RTX Remix" action="ACTION_NONE" value="0" />
             <options text="Vulkan" action="ACTION_NONE" value="1" />
         </menu>
 

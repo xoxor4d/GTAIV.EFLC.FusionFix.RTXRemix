@@ -467,6 +467,16 @@ public:
             FusionFixSettings.Set("PREF_VOLUMETRICFOG", 0);
             FusionFixSettings.Set("PREF_DISTANTLIGHTS", 0);
             FusionFixSettings.Set("PREF_EXTRANIGHTSHADOWS", 0);
+
+            FusionFixSettings.Set("PREF_BLOOM", 0);
+            FusionFixSettings.Set("PREF_CONSOLE_GAMMA", 0);
+        	FusionFixSettings.Set("PREF_TIMECYC", 0);
+            FusionFixSettings.Set("PREF_TCYC_DOF", 0);
+            FusionFixSettings.Set("PREF_SHADOWFILTER", 3);
+            FusionFixSettings.Set("PREF_TONEMAPPING", 0);
+            FusionFixSettings.Set("PREF_AUTOEXPOSURE", 0);
+            FusionFixSettings.Set("PREF_UNCLAMPLIGHTING", 0);
+            FusionFixSettings.Set("PREF_SAO", 0);
         }
     }
 public:
@@ -740,40 +750,30 @@ public:
 
                     if (isUsingRtxRemix())
                     {
-                        if (FusionFixSettings.isSame(id, "PREF_TREE_LIGHTING")) {
+                        if (   FusionFixSettings.isSame(id, "PREF_TREE_LIGHTING")
+							|| FusionFixSettings.isSame(id, "PREF_DEFINITION")
+                            || FusionFixSettings.isSame(id, "PREF_MOTIONBLUR")
+                            || FusionFixSettings.isSame(id, "PREF_TREEALPHA")
+                            || FusionFixSettings.isSame(id, "PREF_SUNSHAFTS")
+                            || FusionFixSettings.isSame(id, "PREF_ANTIALIASING")
+                            || FusionFixSettings.isSame(id, "PREF_VOLUMETRICFOG")
+                            || FusionFixSettings.isSame(id, "PREF_DISTANTLIGHTS")
+                            || FusionFixSettings.isSame(id, "PREF_EXTRANIGHTSHADOWS")
+                            || FusionFixSettings.isSame(id, "PREF_BLOOM")
+                            || FusionFixSettings.isSame(id, "PREF_CONSOLE_GAMMA")
+                            || FusionFixSettings.isSame(id, "PREF_TCYC_DOF")
+                            || FusionFixSettings.isSame(id, "PREF_TIMECYC")
+                            || FusionFixSettings.isSame(id, "PREF_TONEMAPPING")
+                            || FusionFixSettings.isSame(id, "PREF_AUTOEXPOSURE")
+                            || FusionFixSettings.isSame(id, "PREF_UNCLAMPLIGHTING")
+                            || FusionFixSettings.isSame(id, "PREF_SAO")
+                            ) 
+                        {
                             FusionFixSettings.Set(id, 0);
                         }
-
-                        if (FusionFixSettings.isSame(id, "PREF_DEFINITION")) {
-                            FusionFixSettings.Set(id, 0);
-                        }
-
-                        if (FusionFixSettings.isSame(id, "PREF_MOTIONBLUR")) {
-                            FusionFixSettings.Set(id, 0);
-                        }
-
-                        if (FusionFixSettings.isSame(id, "PREF_TREEALPHA")) {
-                            FusionFixSettings.Set(id, 0);
-                        }
-
-                        if (FusionFixSettings.isSame(id, "PREF_SUNSHAFTS")) {
-                            FusionFixSettings.Set(id, 0);
-                        }
-
-                        if (FusionFixSettings.isSame(id, "PREF_ANTIALIASING")) {
-                            FusionFixSettings.Set(id, 0);
-                        }
-
-                        if (FusionFixSettings.isSame(id, "PREF_VOLUMETRICFOG")) {
-                            FusionFixSettings.Set(id, 0);
-                        }
-
-                        if (FusionFixSettings.isSame(id, "PREF_DISTANTLIGHTS")) {
-                            FusionFixSettings.Set(id, 0);
-                        }
-
-                        if (FusionFixSettings.isSame(id, "PREF_EXTRANIGHTSHADOWS")) {
-                            FusionFixSettings.Set(id, 0);
+                        else if (FusionFixSettings.isSame(id, "PREF_SHADOWFILTER"))
+                        {
+                            FusionFixSettings.Set(id, 3);
                         }
                     }
                 }
